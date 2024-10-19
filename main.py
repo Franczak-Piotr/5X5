@@ -1,5 +1,7 @@
 import tkinter as tk
 import random
+import webbrowser
+from tkinter import messagebox
 
 
 class WordGuessGame:
@@ -102,7 +104,8 @@ class WordGuessGame:
             return
 
         if guess not in self.words:
-            self.message_label.config(text="Słowo nie występuje w liście. Spróbuj ponownie.")
+            self.message_label.config(text="Słowo nie występuje w słowniku. -5 sekund")
+            self.time_left -= 5
             return
 
         if guess.upper() == self.secret_word:
@@ -110,6 +113,7 @@ class WordGuessGame:
             self.update_labels(guess.upper())
             self.update_score()  # Dodaj punkty
             self.restart_button.config(text="Graj dalej")
+            self.zapytaj_o_wyszukiwanie(self.secret_word)
             self.end_game()
             return
 
@@ -121,6 +125,7 @@ class WordGuessGame:
         if self.attempts == 0:
             self.message_label.config(text=f"Niestety, przegrałeś! Szukane słowo to: {self.secret_word}")
             self.reset_score()  # Resetuj punkty
+            self.reveal_secret_word()
             self.end_game()
         else:
             self.entry.delete(0, tk.END)
@@ -173,6 +178,7 @@ class WordGuessGame:
     def reveal_secret_word(self):
         for i, letter in enumerate(self.secret_word):
             self.result_labels[self.current_attempt][i].config(text=letter, bg='coral', fg='black')
+        self.zapytaj_o_wyszukiwanie(self.secret_word)
 
     def update_timer(self):
         if self.time_left > 0 and self.timer_active:
@@ -180,7 +186,7 @@ class WordGuessGame:
             self.timer_label.config(text=f"Pozostały czas: {minutes}:{seconds:02d}")
             self.time_left -= 1
             self.master.after(1000, self.update_timer)
-        elif self.time_left == 0:
+        elif self.time_left <= 0:
             self.message_label.config(text=f"Czas minął! Szukane słowo to: {self.secret_word}")
             self.timer_label.config(text=f"Pozostały czas: 00:00")
             self.reveal_secret_word()
@@ -204,9 +210,20 @@ class WordGuessGame:
         self.surrender_button.config(state=tk.DISABLED)
         self.timer_active = False
 
+    def wyszukaj_w_przegladarce(self, slowo):
+        url = f"https://www.google.com/search?q={slowo}"
+        webbrowser.open(url)
+
+    def zapytaj_o_wyszukiwanie(self, slowo):
+        odpowiedz = messagebox.askyesno("GOOGLE", f"Czy wyszukać znaczenie słowa {slowo}?")
+        if odpowiedz:
+            self.wyszukaj_w_przegladarce(slowo)
+        else:
+            return
 
 root = tk.Tk()
 root.title("GRA W PIEĆ RAZY PIĘĆ")
 root.iconbitmap("ico.ico")
 game = WordGuessGame(root)
+root.bind('<Return>', lambda event: game.check_guess())
 root.mainloop()
